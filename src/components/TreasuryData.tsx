@@ -12,7 +12,7 @@ import {
   Area,
   AreaChart,
 } from 'recharts';
-import { RefreshCw, AlertCircle, TrendingUp } from 'lucide-react';
+import { RefreshCw, TrendingUp } from 'lucide-react';
 import {
   fetchYieldCurve,
   getMockYieldCurve,
@@ -21,28 +21,37 @@ import {
   treasuryBondParams,
 } from '@/utils/fred-api';
 import { calculateDuration } from '@/utils/duration';
+import { DataStatusBadge, DataSourceInfo, SuccessMessage, ErrorMessage, type DataSourceStatus } from './DataStatus';
+import { YieldCurveAnimation } from './YieldCurveAnimation';
 
 export function TreasuryData() {
   const [yieldCurve, setYieldCurve] = useState<YieldCurvePoint[]>(getMockYieldCurve());
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [lastUpdated, setLastUpdated] = useState<Date>(new Date());
+  const [dataStatus, setDataStatus] = useState<DataSourceStatus>('idle');
+  const [lastUpdated, setLastUpdated] = useState<Date | undefined>(undefined);
+  const [statusMessage, setStatusMessage] = useState<string>('');
 
   const historicalData = getMockHistoricalRates();
 
   const fetchData = async () => {
     setLoading(true);
-    setError(null);
+    setDataStatus('loading');
+    setStatusMessage('Connecting to FRED API...');
+
     try {
       const data = await fetchYieldCurve();
       if (data.length > 0) {
         setYieldCurve(data);
         setLastUpdated(new Date());
+        setDataStatus('success');
+        setStatusMessage(`Successfully retrieved ${data.length} treasury rates from FRED`);
       } else {
-        throw new Error('No data received');
+        throw new Error('No data received from API');
       }
-    } catch {
-      setError('Failed to fetch live data. Using sample data.');
+    } catch (err) {
+      console.warn('FRED API unavailable:', err);
+      setDataStatus('error');
+      setStatusMessage('FRED API unavailable. Using sample data for demonstration. Real-time rates may differ.');
       setYieldCurve(getMockYieldCurve());
     } finally {
       setLoading(false);
@@ -50,7 +59,6 @@ export function TreasuryData() {
   };
 
   useEffect(() => {
-    // Try to fetch real data on mount
     fetchData();
   }, []);
 
@@ -72,25 +80,45 @@ export function TreasuryData() {
 
   return (
     <div className="space-y-6">
+      {/* Data Status Information */}
+      {statusMessage && (
+        <div>
+          {dataStatus === 'success' ? (
+            <SuccessMessage message={statusMessage} timestamp={lastUpdated} />
+          ) : dataStatus === 'error' ? (
+            <ErrorMessage
+              title="Live Data Unavailable"
+              message={statusMessage}
+              onRetry={fetchData}
+            />
+          ) : null}
+        </div>
+      )}
+
+      <DataSourceInfo />
+
+      {/* Historical Animation */}
+      <YieldCurveAnimation />
+
       <Card>
         <CardHeader>
           <div className="flex items-center justify-between">
             <div>
               <CardTitle className="flex items-center gap-2">
                 <TrendingUp className="h-5 w-5 text-primary" />
-                U.S. Treasury Yield Curve
+                Current U.S. Treasury Yield Curve
               </CardTitle>
               <CardDescription>
-                Current treasury rates from FRED (St. Louis Federal Reserve)
+                Real-time treasury rates from FRED (St. Louis Federal Reserve)
               </CardDescription>
             </div>
-            <div className="flex items-center gap-2">
-              {error && (
-                <span className="text-xs text-amber-600 flex items-center gap-1">
-                  <AlertCircle className="h-3 w-3" />
-                  Sample Data
-                </span>
-              )}
+            <div className="flex flex-col items-end gap-2">
+              <DataStatusBadge
+                status={dataStatus}
+                source="FRED API"
+                lastUpdated={lastUpdated}
+                onRetry={fetchData}
+              />
               <Button
                 variant="outline"
                 size="sm"
@@ -99,13 +127,10 @@ export function TreasuryData() {
                 className="gap-2"
               >
                 <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
-                Refresh
+                {loading ? 'Fetching...' : 'Refresh Data'}
               </Button>
             </div>
           </div>
-          <p className="text-xs text-muted-foreground">
-            Last updated: {lastUpdated.toLocaleString()}
-          </p>
         </CardHeader>
         <CardContent>
           <div className="h-[300px]">
