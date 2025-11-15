@@ -1,24 +1,40 @@
 # Render Blueprint for Bond Duration Calculator
 # This file defines how to deploy the application on Render
 
+# Option 1: Deploy as Static Site (RECOMMENDED)
+# Uncomment this section and comment out Option 2
+# services:
+#   - type: web
+#     name: bond-duration-calculator
+#     runtime: static
+#     buildCommand: npm install && npm run build
+#     staticPublishPath: ./dist
+#     pullRequestPreviewsEnabled: true
+#     envVars:
+#       - key: NODE_VERSION
+#         value: 20
+#     headers:
+#       - path: /*
+#         name: Cache-Control
+#         value: public, max-age=31536000, immutable
+#       - path: /index.html
+#         name: Cache-Control
+#         value: no-cache, no-store, must-revalidate
+#     routes:
+#       - type: rewrite
+#         source: /*
+#         destination: /index.html
+
+# Option 2: Deploy as Web Service (if you prefer server-based deployment)
 services:
   - type: web
     name: bond-duration-calculator
-    runtime: static
+    runtime: node
     buildCommand: npm install && npm run build
-    staticPublishPath: ./dist
-    pullRequestPreviewsEnabled: true
+    startCommand: npm run start
     envVars:
       - key: NODE_VERSION
         value: 20
-    headers:
-      - path: /*
-        name: Cache-Control
-        value: public, max-age=31536000, immutable
-      - path: /index.html
-        name: Cache-Control
-        value: no-cache, no-store, must-revalidate
-    routes:
-      - type: rewrite
-        source: /*
-        destination: /index.html
+      - key: PORT
+        value: 10000
+    healthCheckPath: /
