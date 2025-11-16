@@ -190,6 +190,41 @@ export function getMockHistoricalRates(): Array<{
   ];
 }
 
+export interface HistoricalRatesResponse {
+  data: Array<{
+    date: string;
+    '2Y': number | null;
+    '10Y': number | null;
+    '30Y': number | null;
+    spread2s10s: number | null;
+  }>;
+  source: string;
+  timestamp: string;
+  message?: string;
+}
+
+// Fetch historical treasury rates from FRED API
+export async function fetchHistoricalRates(days: number = 365): Promise<HistoricalRatesResponse> {
+  const response = await fetch(`/api/treasury/historical?days=${days}`, {
+    headers: {
+      'Accept': 'application/json',
+    },
+  });
+
+  if (!response.ok) {
+    throw new Error(`API route error: ${response.status}`);
+  }
+
+  const result = await response.json();
+
+  if (result.error) {
+    throw new Error(result.error);
+  }
+
+  console.info(`Historical data from ${result.source} at ${result.timestamp}`);
+  return result;
+}
+
 // Calculate duration for treasury bonds
 export function treasuryBondParams(
   yearsToMaturity: number,

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { TooltipProvider } from '@/components/ui/tooltip'
 import { DurationCalculator } from '@/components/DurationCalculator'
@@ -10,7 +10,9 @@ import { PriceSensitivity } from '@/components/PriceSensitivity'
 import { TreasuryData } from '@/components/TreasuryData'
 import { EducationalContent } from '@/components/EducationalContent'
 import { BondComparison } from '@/components/BondComparison'
+import { YieldCurveShapeIndicator } from '@/components/YieldCurveShapeIndicator'
 import { calculateDuration, type BondParams } from '@/utils/duration'
+import { fetchTreasuryData, getMockYieldCurve, type YieldCurvePoint } from '@/utils/fred-api'
 import {
   Calculator,
   GraduationCap,
@@ -28,7 +30,24 @@ export default function HomePage() {
     frequency: 2,
   })
 
+  const [yieldCurve, setYieldCurve] = useState<YieldCurvePoint[]>(getMockYieldCurve())
+
   const results = calculateDuration(bondParams)
+
+  // Fetch yield curve data on mount
+  useEffect(() => {
+    const loadYieldCurve = async () => {
+      try {
+        const response = await fetchTreasuryData()
+        if (response.data.length > 0) {
+          setYieldCurve(response.data)
+        }
+      } catch (error) {
+        console.warn('Failed to fetch yield curve, using sample data:', error)
+      }
+    }
+    loadYieldCurve()
+  }, [])
 
   return (
     <TooltipProvider>
@@ -70,15 +89,11 @@ export default function HomePage() {
 
         {/* Main Content */}
         <main className="container mx-auto px-4 py-6">
-          <Tabs defaultValue="calculator" className="space-y-6">
-            <TabsList className="grid w-full grid-cols-4 lg:w-auto lg:inline-grid">
-              <TabsTrigger value="calculator" className="gap-2">
-                <Calculator className="h-4 w-4" />
-                <span className="hidden sm:inline">Calculator</span>
-              </TabsTrigger>
-              <TabsTrigger value="treasury" className="gap-2">
+          <Tabs defaultValue="analysis" className="space-y-6">
+            <TabsList className="grid w-full grid-cols-3 lg:w-auto lg:inline-grid">
+              <TabsTrigger value="analysis" className="gap-2">
                 <TrendingUp className="h-4 w-4" />
-                <span className="hidden sm:inline">Treasury</span>
+                <span className="hidden sm:inline">Analysis</span>
               </TabsTrigger>
               <TabsTrigger value="compare" className="gap-2">
                 <Scale className="h-4 w-4" />
@@ -90,7 +105,10 @@ export default function HomePage() {
               </TabsTrigger>
             </TabsList>
 
-            <TabsContent value="calculator" className="space-y-6">
+            <TabsContent value="analysis" className="space-y-6">
+              {/* Prominent Yield Curve Shape Indicator at the top */}
+              <YieldCurveShapeIndicator yieldCurve={yieldCurve} />
+
               <div className="grid gap-6 lg:grid-cols-2">
                 {/* Left: Calculator Input & Results */}
                 <div>
@@ -109,9 +127,8 @@ export default function HomePage() {
                 cashFlows={results.cashFlows}
                 macaulayDuration={results.macaulayDuration}
               />
-            </TabsContent>
 
-            <TabsContent value="treasury" className="space-y-6">
+              {/* Treasury Analysis */}
               <TreasuryData />
             </TabsContent>
 
