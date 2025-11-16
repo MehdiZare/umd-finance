@@ -1,14 +1,16 @@
-import { useState } from 'react';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { TooltipProvider } from '@/components/ui/tooltip';
-import { DurationCalculator } from '@/components/DurationCalculator';
-import { PriceYieldChart } from '@/components/PriceYieldChart';
-import { CashFlowTable } from '@/components/CashFlowTable';
-import { PriceSensitivity } from '@/components/PriceSensitivity';
-import { TreasuryData } from '@/components/TreasuryData';
-import { EducationalContent } from '@/components/EducationalContent';
-import { BondComparison } from '@/components/BondComparison';
-import { calculateDuration, type BondParams } from '@/utils/duration';
+'use client'
+
+import { useState } from 'react'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { TooltipProvider } from '@/components/ui/tooltip'
+import { DurationCalculator } from '@/components/DurationCalculator'
+import { PriceYieldChart } from '@/components/PriceYieldChart'
+import { CashFlowTable } from '@/components/CashFlowTable'
+import { PriceSensitivity } from '@/components/PriceSensitivity'
+import { TreasuryData } from '@/components/TreasuryData'
+import { EducationalContent } from '@/components/EducationalContent'
+import { BondComparison } from '@/components/BondComparison'
+import { calculateDuration, type BondParams } from '@/utils/duration'
 import {
   Calculator,
   LineChart,
@@ -16,18 +18,18 @@ import {
   TrendingUp,
   Scale,
   Github,
-} from 'lucide-react';
+} from 'lucide-react'
 
-function App() {
+export default function HomePage() {
   const [bondParams] = useState<BondParams>({
     faceValue: 1000,
     couponRate: 0.05,
     yearsToMaturity: 10,
     ytm: 0.05,
     frequency: 2,
-  });
+  })
 
-  const results = calculateDuration(bondParams);
+  const results = calculateDuration(bondParams)
 
   return (
     <TooltipProvider>
@@ -55,7 +57,7 @@ function App() {
                   Data from FRED
                 </a>
                 <a
-                  href="https://github.com"
+                  href="https://github.com/MehdiZare/umd-finance"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="text-muted-foreground hover:text-primary transition-colors"
@@ -192,7 +194,5 @@ function App() {
         </footer>
       </div>
     </TooltipProvider>
-  );
+  )
 }
-
-export default App;

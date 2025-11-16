@@ -67,17 +67,37 @@ export async function fetchFREDSeries(
 }
 
 // Get current treasury yield curve
-// Returns sample data immediately for consistent educational experience
+// Fetches live data from FRED via our Next.js API route (server-side, no CORS issues)
 export async function fetchYieldCurve(): Promise<YieldCurvePoint[]> {
-  // For educational purposes, return curated sample data
-  // This provides consistent, well-documented data for learning
-  console.info('Using curated treasury yield curve data for educational purposes');
+  try {
+    // Call our Next.js API route which fetches from FRED server-side
+    const response = await fetch('/api/treasury', {
+      headers: {
+        'Accept': 'application/json',
+      },
+    });
 
-  // Simulate brief network delay for realistic UX
-  await new Promise(resolve => setTimeout(resolve, 500));
+    if (!response.ok) {
+      throw new Error(`API route error: ${response.status}`);
+    }
 
-  // Return sample data
-  return getMockYieldCurve();
+    const result = await response.json();
+
+    if (result.error) {
+      throw new Error(result.error);
+    }
+
+    console.info(`Treasury data from ${result.source} at ${result.timestamp}`);
+    if (result.missing && result.missing.length > 0) {
+      console.warn('Missing maturities:', result.missing);
+    }
+
+    return result.data;
+  } catch (error) {
+    console.warn('Failed to fetch live treasury data, using sample data:', error);
+    // Fallback to sample data if API fails
+    return getMockYieldCurve();
+  }
 }
 
 // Helper function to get series titles
