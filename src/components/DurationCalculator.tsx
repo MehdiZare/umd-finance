@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useMemo } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { Slider } from '@/components/ui/slider';
@@ -7,24 +7,16 @@ import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { calculateDuration, type BondParams, type DurationResults } from '@/utils/duration';
 import { Info, TrendingDown, TrendingUp, Clock, DollarSign } from 'lucide-react';
 
-export function DurationCalculator() {
-  const [params, setParams] = useState<BondParams>({
-    faceValue: 1000,
-    couponRate: 0.05,
-    yearsToMaturity: 10,
-    ytm: 0.05,
-    frequency: 2,
-  });
+interface DurationCalculatorProps {
+  params: BondParams;
+  onParamsChange: (params: BondParams) => void;
+}
 
-  const [results, setResults] = useState<DurationResults | null>(null);
-
-  useEffect(() => {
-    const newResults = calculateDuration(params);
-    setResults(newResults);
-  }, [params]);
+export function DurationCalculator({ params, onParamsChange }: DurationCalculatorProps) {
+  const results = useMemo(() => calculateDuration(params), [params]);
 
   const updateParam = (key: keyof BondParams, value: number) => {
-    setParams(prev => ({ ...prev, [key]: value }));
+    onParamsChange({ ...params, [key]: value });
   };
 
   return (
@@ -151,117 +143,113 @@ export function DurationCalculator() {
 
           {/* Results Display */}
           <div className="space-y-4">
-            {results && (
-              <>
-                <div className="grid grid-cols-2 gap-4">
-                  <Card className="bg-primary/5">
-                    <CardContent className="pt-4">
-                      <div className="text-sm text-muted-foreground">Bond Price</div>
-                      <div className="text-2xl font-bold text-primary">
-                        ${results.price.toFixed(2)}
-                      </div>
-                      <div className="text-xs text-muted-foreground mt-1">
-                        {results.price > params.faceValue ? (
-                          <span className="flex items-center gap-1 text-green-600">
-                            <TrendingUp className="h-3 w-3" />
-                            Premium Bond
-                          </span>
-                        ) : results.price < params.faceValue ? (
-                          <span className="flex items-center gap-1 text-red-600">
-                            <TrendingDown className="h-3 w-3" />
-                            Discount Bond
-                          </span>
-                        ) : (
-                          'Par Bond'
-                        )}
-                      </div>
-                    </CardContent>
-                  </Card>
+            <div className="grid grid-cols-2 gap-4">
+              <Card className="bg-primary/5">
+                <CardContent className="pt-4">
+                  <div className="text-sm text-muted-foreground">Bond Price</div>
+                  <div className="text-2xl font-bold text-primary">
+                    ${results.price.toFixed(2)}
+                  </div>
+                  <div className="text-xs text-muted-foreground mt-1">
+                    {results.price > params.faceValue ? (
+                      <span className="flex items-center gap-1 text-green-600">
+                        <TrendingUp className="h-3 w-3" />
+                        Premium Bond
+                      </span>
+                    ) : results.price < params.faceValue ? (
+                      <span className="flex items-center gap-1 text-red-600">
+                        <TrendingDown className="h-3 w-3" />
+                        Discount Bond
+                      </span>
+                    ) : (
+                      'Par Bond'
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
 
-                  <Card className="bg-primary/5">
-                    <CardContent className="pt-4">
-                      <div className="text-sm text-muted-foreground flex items-center gap-1">
-                        Macaulay Duration
-                        <Info className="h-3 w-3" />
-                      </div>
-                      <div className="text-2xl font-bold">
-                        {results.macaulayDuration.toFixed(3)} yrs
-                      </div>
-                      <div className="text-xs text-muted-foreground mt-1">
-                        Weighted average time to receive cash flows
-                      </div>
-                    </CardContent>
-                  </Card>
+              <Card className="bg-primary/5">
+                <CardContent className="pt-4">
+                  <div className="text-sm text-muted-foreground flex items-center gap-1">
+                    Macaulay Duration
+                    <Info className="h-3 w-3" />
+                  </div>
+                  <div className="text-2xl font-bold">
+                    {results.macaulayDuration.toFixed(3)} yrs
+                  </div>
+                  <div className="text-xs text-muted-foreground mt-1">
+                    Weighted average time to receive cash flows
+                  </div>
+                </CardContent>
+              </Card>
 
-                  <Card className="bg-secondary/10">
-                    <CardContent className="pt-4">
-                      <div className="text-sm text-muted-foreground">Modified Duration</div>
-                      <div className="text-2xl font-bold">
-                        {results.modifiedDuration.toFixed(3)}
-                      </div>
-                      <div className="text-xs text-muted-foreground mt-1">
-                        % price change per 1% yield change
-                      </div>
-                    </CardContent>
-                  </Card>
+              <Card className="bg-secondary/10">
+                <CardContent className="pt-4">
+                  <div className="text-sm text-muted-foreground">Modified Duration</div>
+                  <div className="text-2xl font-bold">
+                    {results.modifiedDuration.toFixed(3)}
+                  </div>
+                  <div className="text-xs text-muted-foreground mt-1">
+                    % price change per 1% yield change
+                  </div>
+                </CardContent>
+              </Card>
 
-                  <Card className="bg-secondary/10">
-                    <CardContent className="pt-4">
-                      <div className="text-sm text-muted-foreground flex items-center gap-1">
-                        <DollarSign className="h-3 w-3" />
-                        Dollar Duration (DV01)
-                      </div>
-                      <div className="text-2xl font-bold">
-                        ${results.dollarDuration.toFixed(4)}
-                      </div>
-                      <div className="text-xs text-muted-foreground mt-1">
-                        $ change per 1bp yield change
-                      </div>
-                    </CardContent>
-                  </Card>
+              <Card className="bg-secondary/10">
+                <CardContent className="pt-4">
+                  <div className="text-sm text-muted-foreground flex items-center gap-1">
+                    <DollarSign className="h-3 w-3" />
+                    Dollar Duration (DV01)
+                  </div>
+                  <div className="text-2xl font-bold">
+                    ${results.dollarDuration.toFixed(4)}
+                  </div>
+                  <div className="text-xs text-muted-foreground mt-1">
+                    $ change per 1bp yield change
+                  </div>
+                </CardContent>
+              </Card>
 
-                  <Card className="col-span-2 bg-accent/10">
-                    <CardContent className="pt-4">
-                      <div className="text-sm text-muted-foreground">Convexity</div>
-                      <div className="text-2xl font-bold">{results.convexity.toFixed(4)}</div>
-                      <div className="text-xs text-muted-foreground mt-1">
-                        Measures curvature of price-yield relationship (second-order effect)
-                      </div>
-                    </CardContent>
-                  </Card>
-                </div>
+              <Card className="col-span-2 bg-accent/10">
+                <CardContent className="pt-4">
+                  <div className="text-sm text-muted-foreground">Convexity</div>
+                  <div className="text-2xl font-bold">{results.convexity.toFixed(4)}</div>
+                  <div className="text-xs text-muted-foreground mt-1">
+                    Measures curvature of price-yield relationship (second-order effect)
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
 
-                {/* Key Insights */}
-                <Card>
-                  <CardHeader className="pb-3">
-                    <CardTitle className="text-base">Key Insights</CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-2 text-sm">
-                    <p>
-                      <strong>Interest Rate Risk:</strong> A{' '}
-                      <span className="text-red-600">1%</span> increase in yield would cause an
-                      approximate{' '}
-                      <span className="text-red-600 font-semibold">
-                        {results.modifiedDuration.toFixed(2)}%
-                      </span>{' '}
-                      decrease in bond price.
-                    </p>
-                    <p>
-                      <strong>Price Sensitivity:</strong> For every{' '}
-                      <span className="text-primary">1 basis point</span> (0.01%) change in yield,
-                      the bond price changes by{' '}
-                      <span className="font-semibold">${results.dollarDuration.toFixed(4)}</span>.
-                    </p>
-                    <p>
-                      <strong>Convexity Effect:</strong> Higher convexity (
-                      {results.convexity.toFixed(2)}) means the bond will{' '}
-                      <span className="text-green-600">outperform</span> the duration estimate for
-                      large yield changes.
-                    </p>
-                  </CardContent>
-                </Card>
-              </>
-            )}
+            {/* Key Insights */}
+            <Card>
+              <CardHeader className="pb-3">
+                <CardTitle className="text-base">Key Insights</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-2 text-sm">
+                <p>
+                  <strong>Interest Rate Risk:</strong> A{' '}
+                  <span className="text-red-600">1%</span> increase in yield would cause an
+                  approximate{' '}
+                  <span className="text-red-600 font-semibold">
+                    {results.modifiedDuration.toFixed(2)}%
+                  </span>{' '}
+                  decrease in bond price.
+                </p>
+                <p>
+                  <strong>Price Sensitivity:</strong> For every{' '}
+                  <span className="text-primary">1 basis point</span> (0.01%) change in yield,
+                  the bond price changes by{' '}
+                  <span className="font-semibold">${results.dollarDuration.toFixed(4)}</span>.
+                </p>
+                <p>
+                  <strong>Convexity Effect:</strong> Higher convexity (
+                  {results.convexity.toFixed(2)}) means the bond will{' '}
+                  <span className="text-green-600">outperform</span> the duration estimate for
+                  large yield changes.
+                </p>
+              </CardContent>
+            </Card>
           </div>
         </div>
       </CardContent>

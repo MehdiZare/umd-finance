@@ -21,7 +21,7 @@ import {
 } from 'lucide-react'
 
 export default function HomePage() {
-  const [bondParams] = useState<BondParams>({
+  const [bondParams, setBondParams] = useState<BondParams>({
     faceValue: 1000,
     couponRate: 0.05,
     yearsToMaturity: 10,
@@ -97,7 +97,7 @@ export default function HomePage() {
 
             <TabsContent value="calculator" className="space-y-6">
               <div className="grid gap-6">
-                <DurationCalculator />
+                <DurationCalculator params={bondParams} onParamsChange={setBondParams} />
               </div>
             </TabsContent>
 
@@ -137,8 +137,8 @@ export default function HomePage() {
                     </div>
                   </div>
                   <div className="mt-3">
-                    <p className="text-xs text-muted-foreground">
-                      Note: Analysis uses default bond parameters. Customize in the Calculator tab.
+                    <p className="text-xs text-green-600 font-medium">
+                      ✓ Parameters sync with Calculator tab. Adjust values there to update this analysis.
                     </p>
                   </div>
                 </div>
