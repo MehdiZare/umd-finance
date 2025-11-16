@@ -5,6 +5,10 @@ import { NextResponse } from 'next/server'
 
 const FRED_BASE_URL = 'https://api.stlouisfed.org/fred'
 
+// FRED API key - obtain free at https://fred.stlouisfed.org/docs/api/api_key.html
+// Set FRED_API_KEY environment variable in Render dashboard
+const FRED_API_KEY = process.env.FRED_API_KEY || ''
+
 // Treasury series IDs for the yield curve
 const TREASURY_SERIES = {
   DGS1MO: '1M',
@@ -86,8 +90,12 @@ interface AdditionalIndicator {
 }
 
 async function fetchSingleSeries(seriesId: string): Promise<number | null> {
+  if (!FRED_API_KEY) {
+    return null // No API key configured
+  }
+
   try {
-    const url = `${FRED_BASE_URL}/series/observations?series_id=${seriesId}&file_type=json&sort_order=desc&limit=1`
+    const url = `${FRED_BASE_URL}/series/observations?series_id=${seriesId}&api_key=${FRED_API_KEY}&file_type=json&sort_order=desc&limit=1`
 
     const response = await fetch(url, {
       next: { revalidate: 3600 }, // Cache for 1 hour
@@ -113,6 +121,19 @@ async function fetchSingleSeries(seriesId: string): Promise<number | null> {
 }
 
 export async function GET() {
+  // If no API key is configured, return sample data
+  if (!FRED_API_KEY) {
+    console.info('No FRED_API_KEY configured. Using sample data.')
+    return NextResponse.json({
+      data: getSampleYieldCurve(),
+      additionalIndicators: [],
+      seriesUrls: {},
+      source: 'Sample Data (No API Key)',
+      timestamp: new Date().toISOString(),
+      message: 'Set FRED_API_KEY environment variable for live data. Get free key at https://fred.stlouisfed.org/docs/api/api_key.html',
+    })
+  }
+
   try {
     const yieldCurve: YieldCurvePoint[] = []
     const additionalIndicators: AdditionalIndicator[] = []
@@ -198,4 +219,21 @@ export async function GET() {
       { status: 500 }
     )
   }
+}
+
+// Sample yield curve data (November 2024 representative rates)
+function getSampleYieldCurve(): YieldCurvePoint[] {
+  return [
+    { maturity: '1M', years: 1 / 12, rate: 4.58 },
+    { maturity: '3M', years: 0.25, rate: 4.52 },
+    { maturity: '6M', years: 0.5, rate: 4.38 },
+    { maturity: '1Y', years: 1, rate: 4.2 },
+    { maturity: '2Y', years: 2, rate: 4.15 },
+    { maturity: '3Y', years: 3, rate: 4.12 },
+    { maturity: '5Y', years: 5, rate: 4.1 },
+    { maturity: '7Y', years: 7, rate: 4.18 },
+    { maturity: '10Y', years: 10, rate: 4.28 },
+    { maturity: '20Y', years: 20, rate: 4.58 },
+    { maturity: '30Y', years: 30, rate: 4.48 },
+  ]
 }

@@ -61,12 +61,12 @@ An interactive educational tool for Master of Finance students to understand bon
 
 ## Technology Stack
 
-- **React 19** with TypeScript
-- **Vite** for fast development and building
+- **Next.js 15** with React 19 and TypeScript
+- **App Router** with server-side API routes (solves CORS issues)
 - **Tailwind CSS** for styling
 - **shadcn/ui** components (Radix UI primitives)
 - **Recharts** for data visualization
-- **FRED API** for real treasury data
+- **FRED API** for real treasury data (server-side fetching)
 
 ## Getting Started
 
@@ -124,10 +124,26 @@ Configuration:
 ## API Integration
 
 The application fetches real treasury data from the **FRED API** (Federal Reserve Economic Data):
-- No API key required for basic access
-- Automatic fallback to sample data if API is unavailable
-- Clear indicators when using live vs. sample data
-- CORS proxy used for browser requests
+
+### Getting a FRED API Key (Optional, but recommended for live data)
+1. Visit [https://fred.stlouisfed.org/docs/api/api_key.html](https://fred.stlouisfed.org/docs/api/api_key.html)
+2. Request a free API key (takes 1-2 minutes)
+3. Set the environment variable `FRED_API_KEY` in Render dashboard
+4. The app will automatically fetch live treasury data
+
+### Without API Key
+- Uses curated sample data (November 2024 representative rates)
+- All educational features work perfectly
+- Clear indicators show "Sample Data" vs "Live Data"
+
+### Data Features
+- **Live Treasury Yield Curve** - All maturities from 1M to 30Y
+- **Fed Funds Rate** - Current Federal Reserve policy rate
+- **TIPS Yields** - Inflation-protected securities
+- **Breakeven Inflation** - Market inflation expectations
+- **Corporate Spreads** - Investment Grade and High Yield
+- **Direct source links** - Click any indicator to view FRED source page
+- Server-side fetching eliminates CORS issues
 
 ## Educational Use
 
