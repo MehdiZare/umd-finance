@@ -3,6 +3,13 @@
 
 const FRED_BASE_URL = 'https://api.stlouisfed.org/fred';
 
+// CORS Proxies for browser requests (fallback chain)
+const CORS_PROXIES = [
+  'https://corsproxy.io/?',
+  'https://api.codetabs.com/v1/proxy?quest=',
+  'https://cors-anywhere.herokuapp.com/',
+];
+
 // Treasury series IDs
 export const TREASURY_SERIES = {
   // Treasury Constant Maturity Rates
@@ -50,50 +57,77 @@ export interface YieldCurvePoint {
   rate: number;
 }
 
-// Fetch series data from FRED
-// Note: For production use, you should use an API key
+// Fetch series data from FRED with proxy fallback
 export async function fetchFREDSeries(
   seriesId: string,
   startDate?: string,
   limit: number = 30
 ): Promise<FREDSeriesData> {
-  // Using a CORS proxy for browser requests
-  // In production, this should be done server-side
-  const proxyUrl = 'https://api.allorigins.win/raw?url=';
-
   let url = `${FRED_BASE_URL}/series/observations?series_id=${seriesId}&file_type=json&sort_order=desc&limit=${limit}`;
 
   if (startDate) {
     url += `&observation_start=${startDate}`;
   }
 
-  try {
-    const response = await fetch(proxyUrl + encodeURIComponent(url));
+  let lastError: Error | null = null;
 
-    if (!response.ok) {
-      throw new Error(`FRED API error: ${response.status}`);
+  // Try each proxy in sequence
+  for (const proxyUrl of CORS_PROXIES) {
+    try {
+      const response = await fetch(proxyUrl + encodeURIComponent(url), {
+        headers: {
+          'Accept': 'application/json',
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+
+      const text = await response.text();
+
+      // Try to parse as JSON
+      let data;
+      try {
+        data = JSON.parse(text);
+      } catch {
+        throw new Error('Invalid JSON response from FRED API');
+      }
+
+      // Validate response structure
+      if (!data || !Array.isArray(data.observations)) {
+        throw new Error('Invalid FRED API response structure');
+      }
+
+      const observations = data.observations
+        .filter((obs: FREDObservation) => obs && obs.value && obs.value !== '.')
+        .map((obs: FREDObservation) => ({
+          date: obs.date,
+          value: parseFloat(obs.value),
+        }))
+        .filter((obs: { value: number }) => !isNaN(obs.value))
+        .reverse(); // Chronological order
+
+      if (observations.length === 0) {
+        throw new Error('No valid observations in response');
+      }
+
+      return {
+        seriesId,
+        title: getSeriesTitle(seriesId),
+        observations,
+        lastUpdated: new Date().toISOString(),
+      };
+    } catch (error) {
+      lastError = error instanceof Error ? error : new Error(String(error));
+      console.warn(`Proxy ${proxyUrl} failed for ${seriesId}:`, lastError.message);
+      // Continue to next proxy
     }
-
-    const data = await response.json();
-
-    const observations = data.observations
-      .filter((obs: FREDObservation) => obs.value !== '.')
-      .map((obs: FREDObservation) => ({
-        date: obs.date,
-        value: parseFloat(obs.value),
-      }))
-      .reverse(); // Chronological order
-
-    return {
-      seriesId,
-      title: getSeriesTitle(seriesId),
-      observations,
-      lastUpdated: new Date().toISOString(),
-    };
-  } catch (error) {
-    console.error(`Error fetching FRED series ${seriesId}:`, error);
-    throw error;
   }
+
+  // All proxies failed
+  console.error(`All proxies failed for FRED series ${seriesId}:`, lastError);
+  throw lastError || new Error('Failed to fetch from all proxies');
 }
 
 // Get current treasury yield curve
@@ -113,8 +147,9 @@ export async function fetchYieldCurve(): Promise<YieldCurvePoint[]> {
   ];
 
   const yieldCurve: YieldCurvePoint[] = [];
+  const errors: string[] = [];
 
-  // Fetch all series in parallel
+  // Fetch all series in parallel with individual error handling
   const promises = maturities.map(async (maturity) => {
     try {
       const data = await fetchFREDSeries(maturity.id, undefined, 1);
@@ -125,8 +160,9 @@ export async function fetchYieldCurve(): Promise<YieldCurvePoint[]> {
           rate: data.observations[data.observations.length - 1].value,
         };
       }
-    } catch {
-      console.warn(`Failed to fetch ${maturity.id}`);
+    } catch (err) {
+      errors.push(`${maturity.label}: ${err instanceof Error ? err.message : 'Unknown error'}`);
+      console.warn(`Failed to fetch ${maturity.id}:`, err);
     }
     return null;
   });
@@ -137,6 +173,11 @@ export async function fetchYieldCurve(): Promise<YieldCurvePoint[]> {
     if (result) {
       yieldCurve.push(result);
     }
+  }
+
+  // Log summary of errors if any
+  if (errors.length > 0) {
+    console.warn(`Failed to fetch ${errors.length} treasury series:`, errors);
   }
 
   return yieldCurve.sort((a, b) => a.years - b.years);
