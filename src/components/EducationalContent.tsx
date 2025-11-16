@@ -332,6 +332,234 @@ export function EducationalContent() {
                 </div>
               </AccordionContent>
             </AccordionItem>
+
+            <AccordionItem value="key-rate-duration">
+              <AccordionTrigger>Key Rate Duration</AccordionTrigger>
+              <AccordionContent className="space-y-4">
+                <p>
+                  <strong>Key Rate Duration</strong> measures the sensitivity of a bond&apos;s price to
+                  changes in specific maturity points on the yield curve, rather than assuming
+                  parallel shifts.
+                </p>
+
+                <div className="bg-muted p-4 rounded-lg font-mono text-sm">
+                  <p className="font-bold mb-2">Concept:</p>
+                  <p>Total Duration = Σ Key Rate Durations</p>
+                  <p className="mt-2 text-xs">
+                    The sum of all key rate durations equals the effective duration
+                  </p>
+                </div>
+
+                <div className="bg-purple-50 dark:bg-purple-950 p-4 rounded-lg">
+                  <p className="font-bold">Why Key Rate Duration Matters:</p>
+                  <ul className="text-sm mt-2 list-disc list-inside space-y-1">
+                    <li>Yield curves rarely shift in parallel</li>
+                    <li>Different maturities respond differently to economic events</li>
+                    <li>Essential for hedging non-parallel curve shifts</li>
+                    <li>Used for curve flattening/steepening trades</li>
+                  </ul>
+                </div>
+
+                <p>
+                  <strong>Example:</strong> A 10-year Treasury bond has high key rate duration at
+                  the 10-year point but zero exposure to 2-year rate changes.
+                </p>
+              </AccordionContent>
+            </AccordionItem>
+
+            <AccordionItem value="tips">
+              <AccordionTrigger>TIPS and Inflation-Linked Bonds</AccordionTrigger>
+              <AccordionContent className="space-y-4">
+                <p>
+                  <strong>Treasury Inflation-Protected Securities (TIPS)</strong> provide protection
+                  against inflation by adjusting the principal based on CPI.
+                </p>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <Card>
+                    <CardContent className="pt-4">
+                      <h4 className="font-semibold mb-2">Nominal Treasury</h4>
+                      <ul className="text-sm space-y-1">
+                        <li>• Fixed coupon and principal</li>
+                        <li>• Yield includes inflation expectations</li>
+                        <li>• Higher duration risk</li>
+                        <li>• Better when inflation falls</li>
+                      </ul>
+                    </CardContent>
+                  </Card>
+                  <Card>
+                    <CardContent className="pt-4">
+                      <h4 className="font-semibold mb-2">TIPS</h4>
+                      <ul className="text-sm space-y-1">
+                        <li>• Principal adjusts with CPI</li>
+                        <li>• Real yield (after inflation)</li>
+                        <li>• Inflation hedge</li>
+                        <li>• Better when inflation rises</li>
+                      </ul>
+                    </CardContent>
+                  </Card>
+                </div>
+
+                <div className="bg-amber-50 dark:bg-amber-950 p-4 rounded-lg">
+                  <p className="font-bold">Breakeven Inflation Rate:</p>
+                  <p className="font-mono text-sm mt-2">
+                    Breakeven = Nominal Yield - TIPS Real Yield
+                  </p>
+                  <p className="text-sm mt-2">
+                    This is the market&apos;s expectation for average inflation. If actual inflation
+                    exceeds the breakeven rate, TIPS outperform nominal bonds.
+                  </p>
+                </div>
+              </AccordionContent>
+            </AccordionItem>
+
+            <AccordionItem value="yield-strategies">
+              <AccordionTrigger>Yield Curve Strategies</AccordionTrigger>
+              <AccordionContent className="space-y-4">
+                <div className="space-y-4">
+                  <div>
+                    <h4 className="font-semibold text-blue-600">Bullet Strategy</h4>
+                    <p className="text-sm">
+                      Concentrate holdings around a specific maturity. Lower reinvestment risk,
+                      suitable for liability matching.
+                    </p>
+                    <p className="text-xs bg-muted p-2 rounded mt-1">
+                      Example: All bonds mature in 5-7 years
+                    </p>
+                  </div>
+
+                  <div>
+                    <h4 className="font-semibold text-green-600">Barbell Strategy</h4>
+                    <p className="text-sm">
+                      Invest in short and long-term bonds, avoiding intermediate maturities. Higher
+                      convexity, benefits from curve steepening.
+                    </p>
+                    <p className="text-xs bg-muted p-2 rounded mt-1">
+                      Example: 50% in 2-year, 50% in 30-year bonds
+                    </p>
+                  </div>
+
+                  <div>
+                    <h4 className="font-semibold text-purple-600">Ladder Strategy</h4>
+                    <p className="text-sm">
+                      Equal allocation across maturities. Provides regular liquidity, automatic
+                      reinvestment, and reduced timing risk.
+                    </p>
+                    <p className="text-xs bg-muted p-2 rounded mt-1">
+                      Example: Equal weights in 1Y, 2Y, 3Y, 4Y, 5Y bonds
+                    </p>
+                  </div>
+                </div>
+
+                <div className="bg-blue-50 dark:bg-blue-950 p-4 rounded-lg">
+                  <p className="font-bold">Strategy Selection:</p>
+                  <ul className="text-sm mt-2 list-disc list-inside">
+                    <li>
+                      <strong>Bullet:</strong> When you have specific future liabilities
+                    </li>
+                    <li>
+                      <strong>Barbell:</strong> When expecting yield curve steepening
+                    </li>
+                    <li>
+                      <strong>Ladder:</strong> For regular income and reduced risk
+                    </li>
+                  </ul>
+                </div>
+              </AccordionContent>
+            </AccordionItem>
+
+            <AccordionItem value="credit-spreads">
+              <AccordionTrigger>Credit Spreads and Spread Duration</AccordionTrigger>
+              <AccordionContent className="space-y-4">
+                <p>
+                  <strong>Credit Spread</strong> is the additional yield over risk-free treasuries
+                  that compensates investors for credit (default) risk.
+                </p>
+
+                <div className="bg-muted p-4 rounded-lg font-mono text-sm">
+                  <p className="font-bold mb-2">Credit Spread Formula:</p>
+                  <p>Credit Spread = Corporate Bond Yield - Treasury Yield (same maturity)</p>
+                </div>
+
+                <div className="space-y-3">
+                  <div>
+                    <h4 className="font-semibold">Spread Duration</h4>
+                    <p className="text-sm">
+                      Measures price sensitivity to changes in credit spreads. For corporate bonds,
+                      spread duration is typically similar to modified duration but measures
+                      response to spread changes rather than interest rate changes.
+                    </p>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="p-3 bg-green-50 dark:bg-green-950 rounded">
+                      <p className="font-semibold text-sm">Investment Grade</p>
+                      <p className="text-xs">BBB or higher rated</p>
+                      <p className="text-xs mt-1">Typical spread: 50-200 bps</p>
+                    </div>
+                    <div className="p-3 bg-red-50 dark:bg-red-950 rounded">
+                      <p className="font-semibold text-sm">High Yield (Junk)</p>
+                      <p className="text-xs">BB or lower rated</p>
+                      <p className="text-xs mt-1">Typical spread: 300-800 bps</p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="bg-red-50 dark:bg-red-950 p-4 rounded-lg">
+                  <p className="font-bold">Spread Widening Risk:</p>
+                  <p className="text-sm mt-2">
+                    During economic stress, credit spreads widen (increase), causing corporate bond
+                    prices to fall even if treasury yields remain stable. This is why corporate
+                    bonds often underperform treasuries during crises.
+                  </p>
+                </div>
+              </AccordionContent>
+            </AccordionItem>
+
+            <AccordionItem value="roll-down">
+              <AccordionTrigger>Roll Down Return and Carry</AccordionTrigger>
+              <AccordionContent className="space-y-4">
+                <p>
+                  <strong>Roll Down Return</strong> is the price appreciation that occurs as a bond
+                  &quot;rolls down&quot; the yield curve over time, assuming the curve shape remains
+                  constant.
+                </p>
+
+                <div className="bg-muted p-4 rounded-lg">
+                  <p className="font-bold mb-2">Example (Normal Upward-Sloping Curve):</p>
+                  <p className="text-sm">
+                    A 10-year bond yielding 4.0% today. One year later, it becomes a 9-year bond.
+                    If 9-year yields are 3.8%, the bond price increases even without rate changes.
+                  </p>
+                </div>
+
+                <div className="space-y-3">
+                  <div>
+                    <h4 className="font-semibold">Total Return Components:</h4>
+                    <ul className="text-sm list-disc list-inside space-y-1">
+                      <li>
+                        <strong>Carry:</strong> Coupon income (current yield)
+                      </li>
+                      <li>
+                        <strong>Roll Down:</strong> Price change from curve positioning
+                      </li>
+                      <li>
+                        <strong>Rate Change:</strong> Impact of yield movements
+                      </li>
+                    </ul>
+                  </div>
+                </div>
+
+                <div className="bg-green-50 dark:bg-green-950 p-4 rounded-lg">
+                  <p className="font-bold">Strategy Implication:</p>
+                  <p className="text-sm mt-2">
+                    When the yield curve is steep, intermediate bonds (5-10 years) often provide
+                    the best roll-down return. This is why many active managers favor this part of
+                    the curve.
+                  </p>
+                </div>
+              </AccordionContent>
+            </AccordionItem>
           </Accordion>
         </CardContent>
       </Card>

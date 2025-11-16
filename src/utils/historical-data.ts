@@ -13,6 +13,59 @@ export interface HistoricalYieldCurve {
 }
 
 export const historicalYieldCurves: HistoricalYieldCurve[] = [
+  // Earlier historical events for context
+  {
+    date: '2000-01-03',
+    description: 'Dot-Com Peak',
+    event: 'Tech bubble peak, Y2K fears subsided, Fed tightening cycle',
+    curves: [
+      { maturity: '3M', years: 0.25, rate: 5.46 },
+      { maturity: '1Y', years: 1, rate: 6.12 },
+      { maturity: '2Y', years: 2, rate: 6.54 },
+      { maturity: '5Y', years: 5, rate: 6.58 },
+      { maturity: '10Y', years: 10, rate: 6.58 },
+      { maturity: '30Y', years: 30, rate: 6.48 },
+    ],
+  },
+  {
+    date: '2001-09-17',
+    description: 'Post-9/11 Crisis',
+    event: 'First trading day after September 11 attacks, Fed emergency cuts',
+    curves: [
+      { maturity: '3M', years: 0.25, rate: 2.90 },
+      { maturity: '1Y', years: 1, rate: 2.89 },
+      { maturity: '2Y', years: 2, rate: 3.20 },
+      { maturity: '5Y', years: 5, rate: 4.18 },
+      { maturity: '10Y', years: 10, rate: 4.83 },
+      { maturity: '30Y', years: 30, rate: 5.47 },
+    ],
+  },
+  {
+    date: '2003-06-25',
+    description: 'Fed Funds 1% Bottom',
+    event: 'Fed cuts to 1%, lowest in 45 years, deflation fears',
+    curves: [
+      { maturity: '3M', years: 0.25, rate: 0.92 },
+      { maturity: '1Y', years: 1, rate: 1.08 },
+      { maturity: '2Y', years: 2, rate: 1.39 },
+      { maturity: '5Y', years: 5, rate: 2.84 },
+      { maturity: '10Y', years: 10, rate: 3.58 },
+      { maturity: '30Y', years: 30, rate: 4.56 },
+    ],
+  },
+  {
+    date: '2006-06-29',
+    description: 'Fed Ends Tightening',
+    event: 'Fed Funds peak at 5.25%, 17 consecutive hikes complete',
+    curves: [
+      { maturity: '3M', years: 0.25, rate: 5.11 },
+      { maturity: '1Y', years: 1, rate: 5.22 },
+      { maturity: '2Y', years: 2, rate: 5.18 },
+      { maturity: '5Y', years: 5, rate: 5.15 },
+      { maturity: '10Y', years: 10, rate: 5.24 },
+      { maturity: '30Y', years: 30, rate: 5.20 },
+    ],
+  },
   {
     date: '2007-06-01',
     description: 'Pre-Financial Crisis',

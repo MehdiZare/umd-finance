@@ -20,6 +20,19 @@ const TREASURY_SERIES = {
   DGS30: '30Y',
 }
 
+// Additional economic indicators
+const ADDITIONAL_SERIES = {
+  DFF: 'Federal Funds Effective Rate',
+  DFII5: '5-Year TIPS',
+  DFII10: '10-Year TIPS',
+  DFII30: '30-Year TIPS',
+  T5YIE: '5-Year Breakeven Inflation',
+  T10YIE: '10-Year Breakeven Inflation',
+  T30YIEM: '30-Year Breakeven Inflation',
+  BAMLC0A0CM: 'Investment Grade Corporate Spread',
+  BAMLH0A0HYM2: 'High Yield Corporate Spread',
+}
+
 const MATURITY_YEARS: Record<string, number> = {
   '1M': 1 / 12,
   '3M': 0.25,
@@ -34,10 +47,42 @@ const MATURITY_YEARS: Record<string, number> = {
   '30Y': 30,
 }
 
+// FRED series page URLs for attribution
+const FRED_SERIES_URLS: Record<string, string> = {
+  DGS1MO: 'https://fred.stlouisfed.org/series/DGS1MO',
+  DGS3MO: 'https://fred.stlouisfed.org/series/DGS3MO',
+  DGS6MO: 'https://fred.stlouisfed.org/series/DGS6MO',
+  DGS1: 'https://fred.stlouisfed.org/series/DGS1',
+  DGS2: 'https://fred.stlouisfed.org/series/DGS2',
+  DGS3: 'https://fred.stlouisfed.org/series/DGS3',
+  DGS5: 'https://fred.stlouisfed.org/series/DGS5',
+  DGS7: 'https://fred.stlouisfed.org/series/DGS7',
+  DGS10: 'https://fred.stlouisfed.org/series/DGS10',
+  DGS20: 'https://fred.stlouisfed.org/series/DGS20',
+  DGS30: 'https://fred.stlouisfed.org/series/DGS30',
+  DFF: 'https://fred.stlouisfed.org/series/DFF',
+  DFII5: 'https://fred.stlouisfed.org/series/DFII5',
+  DFII10: 'https://fred.stlouisfed.org/series/DFII10',
+  DFII30: 'https://fred.stlouisfed.org/series/DFII30',
+  T5YIE: 'https://fred.stlouisfed.org/series/T5YIE',
+  T10YIE: 'https://fred.stlouisfed.org/series/T10YIE',
+  T30YIEM: 'https://fred.stlouisfed.org/series/T30YIEM',
+  BAMLC0A0CM: 'https://fred.stlouisfed.org/series/BAMLC0A0CM',
+  BAMLH0A0HYM2: 'https://fred.stlouisfed.org/series/BAMLH0A0HYM2',
+}
+
 interface YieldCurvePoint {
   maturity: string
   years: number
   rate: number
+}
+
+interface AdditionalIndicator {
+  seriesId: string
+  name: string
+  value: number
+  unit: string
+  url: string
 }
 
 async function fetchSingleSeries(seriesId: string): Promise<number | null> {
@@ -70,18 +115,19 @@ async function fetchSingleSeries(seriesId: string): Promise<number | null> {
 export async function GET() {
   try {
     const yieldCurve: YieldCurvePoint[] = []
+    const additionalIndicators: AdditionalIndicator[] = []
     const errors: string[] = []
 
-    // Fetch all series in parallel
-    const seriesEntries = Object.entries(TREASURY_SERIES)
-    const results = await Promise.all(
-      seriesEntries.map(([seriesId]) => fetchSingleSeries(seriesId))
+    // Fetch treasury series
+    const treasuryEntries = Object.entries(TREASURY_SERIES)
+    const treasuryResults = await Promise.all(
+      treasuryEntries.map(([seriesId]) => fetchSingleSeries(seriesId))
     )
 
-    // Process results
-    for (let i = 0; i < seriesEntries.length; i++) {
-      const [, maturityLabel] = seriesEntries[i]
-      const rate = results[i]
+    // Process treasury results
+    for (let i = 0; i < treasuryEntries.length; i++) {
+      const [seriesId, maturityLabel] = treasuryEntries[i]
+      const rate = treasuryResults[i]
 
       if (rate !== null) {
         yieldCurve.push({
@@ -90,11 +136,33 @@ export async function GET() {
           rate: rate,
         })
       } else {
-        errors.push(maturityLabel)
+        errors.push(seriesId)
       }
     }
 
-    // Sort by years to maturity
+    // Fetch additional indicators
+    const additionalEntries = Object.entries(ADDITIONAL_SERIES)
+    const additionalResults = await Promise.all(
+      additionalEntries.map(([seriesId]) => fetchSingleSeries(seriesId))
+    )
+
+    // Process additional indicators
+    for (let i = 0; i < additionalEntries.length; i++) {
+      const [seriesId, name] = additionalEntries[i]
+      const value = additionalResults[i]
+
+      if (value !== null) {
+        additionalIndicators.push({
+          seriesId,
+          name,
+          value,
+          unit: seriesId.includes('BAML') ? 'bps' : '%',
+          url: FRED_SERIES_URLS[seriesId],
+        })
+      }
+    }
+
+    // Sort yield curve by years to maturity
     yieldCurve.sort((a, b) => a.years - b.years)
 
     if (yieldCurve.length === 0) {
@@ -107,8 +175,16 @@ export async function GET() {
       )
     }
 
+    // Build series URLs map for attribution
+    const seriesUrls: Record<string, string> = {}
+    for (const [seriesId] of treasuryEntries) {
+      seriesUrls[seriesId] = FRED_SERIES_URLS[seriesId]
+    }
+
     return NextResponse.json({
       data: yieldCurve,
+      additionalIndicators,
+      seriesUrls,
       source: 'FRED API (Live)',
       timestamp: new Date().toISOString(),
       missing: errors.length > 0 ? errors : undefined,

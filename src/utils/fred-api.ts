@@ -52,6 +52,23 @@ export interface YieldCurvePoint {
   rate: number;
 }
 
+export interface AdditionalIndicator {
+  seriesId: string;
+  name: string;
+  value: number;
+  unit: string;
+  url: string;
+}
+
+export interface TreasuryAPIResponse {
+  data: YieldCurvePoint[];
+  additionalIndicators?: AdditionalIndicator[];
+  seriesUrls?: Record<string, string>;
+  source: string;
+  timestamp: string;
+  missing?: string[];
+}
+
 // Fetch series data from FRED
 // NOTE: This function is kept for future backend integration
 // Currently disabled due to CORS restrictions on direct browser access
@@ -66,32 +83,38 @@ export async function fetchFREDSeries(
   throw new Error(`FRED API requires backend proxy. Series: ${seriesId}`);
 }
 
-// Get current treasury yield curve
+// Get current treasury yield curve with additional economic indicators
 // Fetches live data from FRED via our Next.js API route (server-side, no CORS issues)
+export async function fetchTreasuryData(): Promise<TreasuryAPIResponse> {
+  // Call our Next.js API route which fetches from FRED server-side
+  const response = await fetch('/api/treasury', {
+    headers: {
+      'Accept': 'application/json',
+    },
+  });
+
+  if (!response.ok) {
+    throw new Error(`API route error: ${response.status}`);
+  }
+
+  const result = await response.json();
+
+  if (result.error) {
+    throw new Error(result.error);
+  }
+
+  console.info(`Treasury data from ${result.source} at ${result.timestamp}`);
+  if (result.missing && result.missing.length > 0) {
+    console.warn('Missing series:', result.missing);
+  }
+
+  return result;
+}
+
+// Backward compatible function that returns just the yield curve
 export async function fetchYieldCurve(): Promise<YieldCurvePoint[]> {
   try {
-    // Call our Next.js API route which fetches from FRED server-side
-    const response = await fetch('/api/treasury', {
-      headers: {
-        'Accept': 'application/json',
-      },
-    });
-
-    if (!response.ok) {
-      throw new Error(`API route error: ${response.status}`);
-    }
-
-    const result = await response.json();
-
-    if (result.error) {
-      throw new Error(result.error);
-    }
-
-    console.info(`Treasury data from ${result.source} at ${result.timestamp}`);
-    if (result.missing && result.missing.length > 0) {
-      console.warn('Missing maturities:', result.missing);
-    }
-
+    const result = await fetchTreasuryData();
     return result.data;
   } catch (error) {
     console.warn('Failed to fetch live treasury data, using sample data:', error);
