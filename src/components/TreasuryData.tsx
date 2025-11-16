@@ -14,7 +14,7 @@ import {
   Bar,
   BarChart,
 } from 'recharts';
-import { RefreshCw, TrendingUp, ExternalLink, Database, Info } from 'lucide-react';
+import { RefreshCw, TrendingUp, ExternalLink, Database, Info, AlertTriangle } from 'lucide-react';
 import {
   fetchTreasuryData,
   getMockYieldCurve,
@@ -71,8 +71,21 @@ export function TreasuryData() {
         setAdditionalIndicators(response.additionalIndicators || []);
         setLastUpdated(new Date(response.timestamp));
         setDataSource(response.source);
-        setDataStatus('success');
-        setStatusMessage(`Successfully retrieved ${response.data.length} treasury rates and ${response.additionalIndicators?.length || 0} additional indicators from FRED`);
+
+        // Check if we're using sample data (no API key configured)
+        if (response.source.includes('Sample')) {
+          setDataStatus('idle'); // Not an error, but not live data either
+          const message = (response as TreasuryAPIResponse & { message?: string }).message;
+          setStatusMessage(
+            message ||
+              'Using sample data. Set FRED_API_KEY environment variable for live data.'
+          );
+        } else {
+          setDataStatus('success');
+          setStatusMessage(
+            `Successfully retrieved ${response.data.length} treasury rates and ${response.additionalIndicators?.length || 0} additional indicators from FRED`
+          );
+        }
       } else {
         throw new Error('No data received from API');
       }
@@ -148,6 +161,30 @@ export function TreasuryData() {
               message={statusMessage}
               onRetry={fetchData}
             />
+          ) : dataStatus === 'idle' && dataSource.includes('Sample') ? (
+            <Card className="bg-amber-50 border-amber-200">
+              <CardContent className="pt-4">
+                <div className="flex items-start gap-3">
+                  <AlertTriangle className="h-5 w-5 text-amber-600 mt-0.5" />
+                  <div>
+                    <h3 className="font-semibold text-amber-900">Using Sample Data</h3>
+                    <p className="text-sm text-amber-800 mt-1">{statusMessage}</p>
+                    <p className="text-xs text-amber-700 mt-2">
+                      Get your free FRED API key at{' '}
+                      <a
+                        href="https://fred.stlouisfed.org/docs/api/api_key.html"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="underline hover:text-amber-900"
+                      >
+                        fred.stlouisfed.org
+                      </a>
+                      , then add FRED_API_KEY to your environment variables.
+                    </p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
           ) : null}
         </div>
       )}
