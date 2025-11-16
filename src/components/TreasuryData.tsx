@@ -70,6 +70,7 @@ export function TreasuryData() {
   const [historicalData, setHistoricalData] = useState<HistoricalDataPoint[]>([]);
   const [historicalSource, setHistoricalSource] = useState<string>('');
   const [loadingHistorical, setLoadingHistorical] = useState(false);
+  const [selectedDays, setSelectedDays] = useState<number>(365);
 
   const fetchData = async () => {
     setLoading(true);
@@ -113,10 +114,10 @@ export function TreasuryData() {
     }
   };
 
-  const fetchHistoricalData = async () => {
+  const fetchHistoricalData = async (days: number = selectedDays) => {
     setLoadingHistorical(true);
     try {
-      const response = await fetchHistoricalRates(365);
+      const response = await fetchHistoricalRates(days);
       setHistoricalData(response.data);
       setHistoricalSource(response.source);
     } catch (err) {
@@ -129,7 +130,14 @@ export function TreasuryData() {
   useEffect(() => {
     fetchData();
     fetchHistoricalData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // Refetch historical data when date range changes
+  useEffect(() => {
+    fetchHistoricalData(selectedDays);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedDays]);
 
   // Calculate durations for each treasury maturity
   const durationData = yieldCurve.map(point => {
@@ -570,30 +578,59 @@ export function TreasuryData() {
       {/* Historical Treasury Rates with Real Data */}
       <Card>
         <CardHeader>
-          <div className="flex items-center justify-between">
-            <div>
-              <CardTitle className="flex items-center gap-2">
-                Historical Treasury Rates
-                {historicalSource.includes('Live') && (
-                  <span className="text-xs bg-green-100 text-green-700 px-2 py-1 rounded">Live Data</span>
-                )}
-              </CardTitle>
-              <CardDescription>
-                {historicalSource.includes('Sample')
-                  ? 'Sample data showing 2Y, 10Y, and 30Y treasury yields over time'
-                  : 'Live FRED data showing 2Y, 10Y, and 30Y treasury yields (past year)'}
-              </CardDescription>
+          <div className="flex flex-col gap-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <CardTitle className="flex items-center gap-2">
+                  Historical Treasury Rates
+                  {historicalSource.includes('Live') && (
+                    <span className="text-xs bg-green-100 text-green-700 px-2 py-1 rounded">Live FRED Data</span>
+                  )}
+                  {historicalSource.includes('Sample') && (
+                    <span className="text-xs bg-amber-100 text-amber-700 px-2 py-1 rounded">Sample Data</span>
+                  )}
+                </CardTitle>
+                <CardDescription>
+                  {historicalSource.includes('Sample')
+                    ? 'Sample data - Set FRED_API_KEY for live historical data from St. Louis Fed'
+                    : `Live data from FRED showing 2Y, 10Y, and 30Y treasury yields`}
+                </CardDescription>
+              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => fetchHistoricalData(selectedDays)}
+                disabled={loadingHistorical}
+                className="gap-2"
+              >
+                <RefreshCw className={`h-4 w-4 ${loadingHistorical ? 'animate-spin' : ''}`} />
+                Refresh
+              </Button>
             </div>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={fetchHistoricalData}
-              disabled={loadingHistorical}
-              className="gap-2"
-            >
-              <RefreshCw className={`h-4 w-4 ${loadingHistorical ? 'animate-spin' : ''}`} />
-              Refresh
-            </Button>
+
+            {/* Date Range Selection */}
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="text-sm font-medium text-muted-foreground">Date Range:</span>
+              {[
+                { label: '30 Days', days: 30 },
+                { label: '90 Days', days: 90 },
+                { label: '6 Months', days: 180 },
+                { label: '1 Year', days: 365 },
+                { label: '2 Years', days: 730 },
+                { label: '5 Years', days: 1825 },
+              ].map(({ label, days }) => (
+                <Button
+                  key={days}
+                  variant={selectedDays === days ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => setSelectedDays(days)}
+                  disabled={loadingHistorical}
+                  className="text-xs"
+                >
+                  {label}
+                </Button>
+              ))}
+            </div>
           </div>
         </CardHeader>
         <CardContent>
