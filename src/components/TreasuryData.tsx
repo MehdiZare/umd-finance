@@ -149,8 +149,72 @@ export function TreasuryData() {
     },
   ].filter(d => d.real > 0);
 
+  // Calculate yield curve shape
+  const rate2Y = yieldCurve.find(y => y.maturity === '2Y')?.rate || 0;
+  const rate10Y = yieldCurve.find(y => y.maturity === '10Y')?.rate || 0;
+  const rate3M = yieldCurve.find(y => y.maturity === '3M')?.rate || 0;
+  const rate30Y = yieldCurve.find(y => y.maturity === '30Y')?.rate || 0;
+  const spread2s10s = rate10Y - rate2Y;
+  const spread3m30y = rate30Y - rate3M;
+
+  const isInverted = spread2s10s < 0;
+  const isFlat = Math.abs(spread2s10s) < 0.25;
+  const isSteep = spread2s10s > 1.0;
+
   return (
     <div className="space-y-6">
+      {/* Yield Curve Shape Indicator - PROMINENT */}
+      <Card className={`border-2 ${isInverted ? 'bg-red-50 border-red-300' : isFlat ? 'bg-amber-50 border-amber-300' : isSteep ? 'bg-green-50 border-green-300' : 'bg-blue-50 border-blue-300'}`}>
+        <CardContent className="pt-6">
+          <div className="text-center">
+            <h2 className="text-2xl font-bold mb-2">
+              {isInverted ? (
+                <span className="text-red-700">Inverted Yield Curve</span>
+              ) : isFlat ? (
+                <span className="text-amber-700">Flat Yield Curve</span>
+              ) : isSteep ? (
+                <span className="text-green-700">Steep Yield Curve</span>
+              ) : (
+                <span className="text-blue-700">Normal Yield Curve</span>
+              )}
+            </h2>
+            <p className="text-sm text-muted-foreground mb-4">
+              {isInverted ? (
+                'Short-term rates exceed long-term rates - historically a recession warning signal'
+              ) : isFlat ? (
+                'Minimal difference between short and long-term rates - economic uncertainty'
+              ) : isSteep ? (
+                'Strong upward slope - typical of economic expansion expectations'
+              ) : (
+                'Healthy upward slope - normal market conditions'
+              )}
+            </p>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <div className="p-3 bg-white/50 rounded-lg">
+                <div className="text-xs text-muted-foreground">2Y-10Y Spread</div>
+                <div className={`text-xl font-bold ${spread2s10s < 0 ? 'text-red-600' : 'text-green-600'}`}>
+                  {spread2s10s > 0 ? '+' : ''}{(spread2s10s * 100).toFixed(0)} bps
+                </div>
+              </div>
+              <div className="p-3 bg-white/50 rounded-lg">
+                <div className="text-xs text-muted-foreground">3M-30Y Spread</div>
+                <div className={`text-xl font-bold ${spread3m30y < 0 ? 'text-red-600' : 'text-green-600'}`}>
+                  {spread3m30y > 0 ? '+' : ''}{(spread3m30y * 100).toFixed(0)} bps
+                </div>
+              </div>
+              <div className="p-3 bg-white/50 rounded-lg">
+                <div className="text-xs text-muted-foreground">Short-term (3M)</div>
+                <div className="text-xl font-bold">{rate3M.toFixed(2)}%</div>
+              </div>
+              <div className="p-3 bg-white/50 rounded-lg">
+                <div className="text-xs text-muted-foreground">Long-term (30Y)</div>
+                <div className="text-xl font-bold">{rate30Y.toFixed(2)}%</div>
+              </div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
       {/* Data Status Information */}
       {statusMessage && (
         <div>
@@ -435,40 +499,6 @@ export function TreasuryData() {
             </ResponsiveContainer>
           </div>
 
-          {/* Yield Curve Shape Analysis */}
-          <div className="mt-4 p-4 bg-muted/50 rounded-lg">
-            <p className="font-semibold mb-2">Yield Curve Analysis:</p>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
-              <div>
-                <p className="text-muted-foreground">2Y-10Y Spread</p>
-                <p className="text-lg font-bold">
-                  {(
-                    (yieldCurve.find(y => y.maturity === '10Y')?.rate || 0) -
-                    (yieldCurve.find(y => y.maturity === '2Y')?.rate || 0)
-                  ).toFixed(2)}
-                  %
-                </p>
-                <p className="text-xs text-muted-foreground">
-                  {(yieldCurve.find(y => y.maturity === '10Y')?.rate || 0) >
-                  (yieldCurve.find(y => y.maturity === '2Y')?.rate || 0)
-                    ? 'Normal (upward sloping)'
-                    : 'Inverted (recession signal)'}
-                </p>
-              </div>
-              <div>
-                <p className="text-muted-foreground">Short-term (3M)</p>
-                <p className="text-lg font-bold">
-                  {yieldCurve.find(y => y.maturity === '3M')?.rate.toFixed(2) || 'N/A'}%
-                </p>
-              </div>
-              <div>
-                <p className="text-muted-foreground">Long-term (30Y)</p>
-                <p className="text-lg font-bold">
-                  {yieldCurve.find(y => y.maturity === '30Y')?.rate.toFixed(2) || 'N/A'}%
-                </p>
-              </div>
-            </div>
-          </div>
         </CardContent>
       </Card>
 
@@ -576,8 +606,10 @@ export function TreasuryData() {
       {/* Historical Spread */}
       <Card>
         <CardHeader>
-          <CardTitle>Historical Treasury Rates</CardTitle>
-          <CardDescription>2Y vs 10Y spread over time (sample data)</CardDescription>
+          <CardTitle>Historical Treasury Rates (Illustrative)</CardTitle>
+          <CardDescription>
+            Example of how treasury rates change over time - Shows 2Y, 10Y, and 30Y treasury yields
+          </CardDescription>
         </CardHeader>
         <CardContent>
           <div className="h-[300px]">
@@ -593,11 +625,30 @@ export function TreasuryData() {
                   label={{ value: 'Yield (%)', angle: -90, position: 'insideLeft' }}
                 />
                 <Tooltip formatter={(value: number) => [`${value.toFixed(2)}%`]} />
-                <Line type="monotone" dataKey="2Y" stroke="#2563eb" name="2-Year" />
-                <Line type="monotone" dataKey="10Y" stroke="#16a34a" name="10-Year" />
-                <Line type="monotone" dataKey="30Y" stroke="#dc2626" name="30-Year" />
+                <Line type="monotone" dataKey="2Y" stroke="#2563eb" name="2-Year" strokeWidth={2} />
+                <Line type="monotone" dataKey="10Y" stroke="#16a34a" name="10-Year" strokeWidth={2} />
+                <Line type="monotone" dataKey="30Y" stroke="#dc2626" name="30-Year" strokeWidth={2} />
               </LineChart>
             </ResponsiveContainer>
+          </div>
+          <div className="mt-4 p-4 bg-muted/50 rounded-lg">
+            <p className="font-semibold mb-2">Understanding the Chart:</p>
+            <ul className="text-sm text-muted-foreground space-y-1 list-disc list-inside">
+              <li>When 10Y line (green) is below 2Y line (blue), the yield curve is <strong>inverted</strong></li>
+              <li>Wide gap between 2Y and 30Y indicates a <strong>steep curve</strong> (growth expectations)</li>
+              <li>Lines converging suggests a <strong>flattening curve</strong> (uncertainty)</li>
+            </ul>
+            <div className="mt-3 text-xs text-muted-foreground">
+              <a
+                href="https://fred.stlouisfed.org/graph/?g=1EBcS"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-blue-600 hover:underline inline-flex items-center gap-1"
+              >
+                <ExternalLink className="h-3 w-3" />
+                View actual historical treasury data on FRED
+              </a>
+            </div>
           </div>
         </CardContent>
       </Card>

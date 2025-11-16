@@ -13,7 +13,6 @@ import { BondComparison } from '@/components/BondComparison'
 import { calculateDuration, type BondParams } from '@/utils/duration'
 import {
   Calculator,
-  LineChart,
   GraduationCap,
   TrendingUp,
   Scale,
@@ -72,14 +71,10 @@ export default function HomePage() {
         {/* Main Content */}
         <main className="container mx-auto px-4 py-6">
           <Tabs defaultValue="calculator" className="space-y-6">
-            <TabsList className="grid w-full grid-cols-5 lg:w-auto lg:inline-grid">
+            <TabsList className="grid w-full grid-cols-4 lg:w-auto lg:inline-grid">
               <TabsTrigger value="calculator" className="gap-2">
                 <Calculator className="h-4 w-4" />
                 <span className="hidden sm:inline">Calculator</span>
-              </TabsTrigger>
-              <TabsTrigger value="analysis" className="gap-2">
-                <LineChart className="h-4 w-4" />
-                <span className="hidden sm:inline">Analysis</span>
               </TabsTrigger>
               <TabsTrigger value="treasury" className="gap-2">
                 <TrendingUp className="h-4 w-4" />
@@ -96,73 +91,24 @@ export default function HomePage() {
             </TabsList>
 
             <TabsContent value="calculator" className="space-y-6">
-              <div className="grid gap-6">
-                <DurationCalculator params={bondParams} onParamsChange={setBondParams} />
-              </div>
-            </TabsContent>
-
-            <TabsContent value="analysis" className="space-y-6">
-              <div className="grid gap-6">
-                {/* Introduction */}
-                <div className="bg-primary/5 border border-primary/20 rounded-lg p-4">
-                  <h2 className="text-lg font-semibold mb-2">Bond Analysis Dashboard</h2>
-                  <p className="text-sm text-muted-foreground mb-3">
-                    Visualize how your bond behaves under different market conditions. This analysis helps you understand:
-                  </p>
-                  <ul className="text-sm text-muted-foreground space-y-1 list-disc list-inside">
-                    <li><strong>Price Sensitivity:</strong> How bond price changes when yields move up or down</li>
-                    <li><strong>Price-Yield Relationship:</strong> The convex curve showing price vs. yield trade-off</li>
-                    <li><strong>Cash Flow Timeline:</strong> When and how much you receive over the bond&apos;s life</li>
-                  </ul>
+              <div className="grid gap-6 lg:grid-cols-2">
+                {/* Left: Calculator Input & Results */}
+                <div>
+                  <DurationCalculator params={bondParams} onParamsChange={setBondParams} />
                 </div>
 
-                {/* Bond Parameter Summary */}
-                <div className="p-4 bg-muted/50 rounded-lg">
-                  <h3 className="font-semibold mb-2">Current Bond Parameters</h3>
-                  <div className="grid grid-cols-2 md:grid-cols-5 gap-4 text-sm">
-                    <div>
-                      <span className="text-muted-foreground">Face Value:</span>
-                      <div className="font-mono">${bondParams.faceValue}</div>
-                    </div>
-                    <div>
-                      <span className="text-muted-foreground">Coupon Rate:</span>
-                      <div className="font-mono">{(bondParams.couponRate * 100).toFixed(2)}%</div>
-                    </div>
-                    <div>
-                      <span className="text-muted-foreground">Maturity:</span>
-                      <div className="font-mono">{bondParams.yearsToMaturity} years</div>
-                    </div>
-                    <div>
-                      <span className="text-muted-foreground">YTM:</span>
-                      <div className="font-mono">{(bondParams.ytm * 100).toFixed(2)}%</div>
-                    </div>
-                    <div>
-                      <span className="text-muted-foreground">Frequency:</span>
-                      <div className="font-mono">
-                        {bondParams.frequency === 1
-                          ? 'Annual'
-                          : bondParams.frequency === 2
-                            ? 'Semi-Annual'
-                            : bondParams.frequency === 4
-                              ? 'Quarterly'
-                              : 'Monthly'}
-                      </div>
-                    </div>
-                  </div>
-                  <div className="mt-3">
-                    <p className="text-xs text-green-600 font-medium">
-                      ✓ Parameters sync with Calculator tab. Adjust values there to update this analysis.
-                    </p>
-                  </div>
+                {/* Right: Analysis Visualizations */}
+                <div className="space-y-6">
+                  <PriceSensitivity params={bondParams} />
+                  <PriceYieldChart params={bondParams} />
                 </div>
-
-                <PriceSensitivity params={bondParams} />
-                <PriceYieldChart params={bondParams} />
-                <CashFlowTable
-                  cashFlows={results.cashFlows}
-                  macaulayDuration={results.macaulayDuration}
-                />
               </div>
+
+              {/* Full width: Cash Flow Table */}
+              <CashFlowTable
+                cashFlows={results.cashFlows}
+                macaulayDuration={results.macaulayDuration}
+              />
             </TabsContent>
 
             <TabsContent value="treasury" className="space-y-6">
