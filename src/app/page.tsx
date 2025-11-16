@@ -103,6 +103,19 @@ export default function HomePage() {
 
             <TabsContent value="analysis" className="space-y-6">
               <div className="grid gap-6">
+                {/* Introduction */}
+                <div className="bg-primary/5 border border-primary/20 rounded-lg p-4">
+                  <h2 className="text-lg font-semibold mb-2">Bond Analysis Dashboard</h2>
+                  <p className="text-sm text-muted-foreground mb-3">
+                    Visualize how your bond behaves under different market conditions. This analysis helps you understand:
+                  </p>
+                  <ul className="text-sm text-muted-foreground space-y-1 list-disc list-inside">
+                    <li><strong>Price Sensitivity:</strong> How bond price changes when yields move up or down</li>
+                    <li><strong>Price-Yield Relationship:</strong> The convex curve showing price vs. yield trade-off</li>
+                    <li><strong>Cash Flow Timeline:</strong> When and how much you receive over the bond&apos;s life</li>
+                  </ul>
+                </div>
+
                 {/* Bond Parameter Summary */}
                 <div className="p-4 bg-muted/50 rounded-lg">
                   <h3 className="font-semibold mb-2">Current Bond Parameters</h3>
