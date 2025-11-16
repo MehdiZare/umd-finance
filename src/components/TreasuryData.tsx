@@ -27,6 +27,7 @@ import {
 import { calculateDuration } from '@/utils/duration';
 import { DataStatusBadge, SuccessMessage, ErrorMessage, type DataSourceStatus } from './DataStatus';
 import { YieldCurveAnimation } from './YieldCurveAnimation';
+import { MacroContext } from './MacroContext';
 import {
   Tooltip as UITooltip,
   TooltipContent,
@@ -241,6 +242,9 @@ export function TreasuryData() {
           </div>
         </CardContent>
       </Card>
+
+      {/* Macroeconomic Context */}
+      <MacroContext />
 
       {/* Additional Economic Indicators */}
       {additionalIndicators.length > 0 && (
