@@ -109,17 +109,13 @@ export default function HomePage() {
               {/* Prominent Yield Curve Shape Indicator at the top */}
               <YieldCurveShapeIndicator yieldCurve={yieldCurve} />
 
-              <div className="grid gap-6 lg:grid-cols-2">
-                {/* Left: Calculator Input & Results */}
-                <div>
-                  <DurationCalculator params={bondParams} onParamsChange={setBondParams} />
-                </div>
+              {/* Calculator - Full width since it has its own 2-col layout */}
+              <DurationCalculator params={bondParams} onParamsChange={setBondParams} />
 
-                {/* Right: Analysis Visualizations */}
-                <div className="space-y-6">
-                  <PriceSensitivity params={bondParams} />
-                  <PriceYieldChart params={bondParams} />
-                </div>
+              {/* Analysis Visualizations - Side by side */}
+              <div className="grid gap-6 lg:grid-cols-2">
+                <PriceSensitivity params={bondParams} />
+                <PriceYieldChart params={bondParams} />
               </div>
 
               {/* Full width: Cash Flow Table */}

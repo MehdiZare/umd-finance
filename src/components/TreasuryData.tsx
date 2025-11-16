@@ -29,6 +29,7 @@ import { calculateDuration } from '@/utils/duration';
 import { DataStatusBadge, SuccessMessage, ErrorMessage, type DataSourceStatus } from './DataStatus';
 import { YieldCurveAnimation } from './YieldCurveAnimation';
 import { MacroContext } from './MacroContext';
+import { HistoricalYieldCurveViewer } from './HistoricalYieldCurveViewer';
 import {
   Tooltip as UITooltip,
   TooltipContent,
@@ -395,6 +396,9 @@ export function TreasuryData() {
           </CardContent>
         </Card>
       )}
+
+      {/* Historical Yield Curve Shape Viewer */}
+      <HistoricalYieldCurveViewer />
 
       {/* Historical Animation */}
       <YieldCurveAnimation />
