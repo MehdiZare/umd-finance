@@ -1,5 +1,7 @@
 // FRED (Federal Reserve Economic Data) API Integration
 // St. Louis Fed API - Free to use, no API key required for basic access
+// NOTE: Direct FRED API access from browser is blocked by CORS.
+// For production use, this would require a backend proxy server.
 
 const FRED_BASE_URL = 'https://api.stlouisfed.org/fred';
 
@@ -50,96 +52,75 @@ export interface YieldCurvePoint {
   rate: number;
 }
 
-// Fetch series data from FRED
-// Note: For production use, you should use an API key
-export async function fetchFREDSeries(
-  seriesId: string,
-  startDate?: string,
-  limit: number = 30
-): Promise<FREDSeriesData> {
-  // Using a CORS proxy for browser requests
-  // In production, this should be done server-side
-  const proxyUrl = 'https://api.allorigins.win/raw?url=';
-
-  let url = `${FRED_BASE_URL}/series/observations?series_id=${seriesId}&file_type=json&sort_order=desc&limit=${limit}`;
-
-  if (startDate) {
-    url += `&observation_start=${startDate}`;
-  }
-
-  try {
-    const response = await fetch(proxyUrl + encodeURIComponent(url));
-
-    if (!response.ok) {
-      throw new Error(`FRED API error: ${response.status}`);
-    }
-
-    const data = await response.json();
-
-    const observations = data.observations
-      .filter((obs: FREDObservation) => obs.value !== '.')
-      .map((obs: FREDObservation) => ({
-        date: obs.date,
-        value: parseFloat(obs.value),
-      }))
-      .reverse(); // Chronological order
-
-    return {
-      seriesId,
-      title: getSeriesTitle(seriesId),
-      observations,
-      lastUpdated: new Date().toISOString(),
-    };
-  } catch (error) {
-    console.error(`Error fetching FRED series ${seriesId}:`, error);
-    throw error;
-  }
+export interface AdditionalIndicator {
+  seriesId: string;
+  name: string;
+  value: number;
+  unit: string;
+  url: string;
 }
 
-// Get current treasury yield curve
-export async function fetchYieldCurve(): Promise<YieldCurvePoint[]> {
-  const maturities = [
-    { id: TREASURY_SERIES.DGS1MO, years: 1/12, label: '1M' },
-    { id: TREASURY_SERIES.DGS3MO, years: 0.25, label: '3M' },
-    { id: TREASURY_SERIES.DGS6MO, years: 0.5, label: '6M' },
-    { id: TREASURY_SERIES.DGS1, years: 1, label: '1Y' },
-    { id: TREASURY_SERIES.DGS2, years: 2, label: '2Y' },
-    { id: TREASURY_SERIES.DGS3, years: 3, label: '3Y' },
-    { id: TREASURY_SERIES.DGS5, years: 5, label: '5Y' },
-    { id: TREASURY_SERIES.DGS7, years: 7, label: '7Y' },
-    { id: TREASURY_SERIES.DGS10, years: 10, label: '10Y' },
-    { id: TREASURY_SERIES.DGS20, years: 20, label: '20Y' },
-    { id: TREASURY_SERIES.DGS30, years: 30, label: '30Y' },
-  ];
+export interface TreasuryAPIResponse {
+  data: YieldCurvePoint[];
+  additionalIndicators?: AdditionalIndicator[];
+  seriesUrls?: Record<string, string>;
+  source: string;
+  timestamp: string;
+  missing?: string[];
+}
 
-  const yieldCurve: YieldCurvePoint[] = [];
+// Fetch series data from FRED
+// NOTE: This function is kept for future backend integration
+// Currently disabled due to CORS restrictions on direct browser access
+export async function fetchFREDSeries(
+  seriesId: string,
+  _startDate?: string,
+  _limit: number = 30
+): Promise<FREDSeriesData> {
+  // FRED API requires server-side proxy due to CORS restrictions
+  // For educational purposes, we use curated sample data instead
+  console.info(`FRED API: Direct browser access blocked by CORS. Use sample data for ${seriesId}`);
+  throw new Error(`FRED API requires backend proxy. Series: ${seriesId}`);
+}
 
-  // Fetch all series in parallel
-  const promises = maturities.map(async (maturity) => {
-    try {
-      const data = await fetchFREDSeries(maturity.id, undefined, 1);
-      if (data.observations.length > 0) {
-        return {
-          maturity: maturity.label,
-          years: maturity.years,
-          rate: data.observations[data.observations.length - 1].value,
-        };
-      }
-    } catch {
-      console.warn(`Failed to fetch ${maturity.id}`);
-    }
-    return null;
+// Get current treasury yield curve with additional economic indicators
+// Fetches live data from FRED via our Next.js API route (server-side, no CORS issues)
+export async function fetchTreasuryData(): Promise<TreasuryAPIResponse> {
+  // Call our Next.js API route which fetches from FRED server-side
+  const response = await fetch('/api/treasury', {
+    headers: {
+      'Accept': 'application/json',
+    },
   });
 
-  const results = await Promise.all(promises);
-
-  for (const result of results) {
-    if (result) {
-      yieldCurve.push(result);
-    }
+  if (!response.ok) {
+    throw new Error(`API route error: ${response.status}`);
   }
 
-  return yieldCurve.sort((a, b) => a.years - b.years);
+  const result = await response.json();
+
+  if (result.error) {
+    throw new Error(result.error);
+  }
+
+  console.info(`Treasury data from ${result.source} at ${result.timestamp}`);
+  if (result.missing && result.missing.length > 0) {
+    console.warn('Missing series:', result.missing);
+  }
+
+  return result;
+}
+
+// Backward compatible function that returns just the yield curve
+export async function fetchYieldCurve(): Promise<YieldCurvePoint[]> {
+  try {
+    const result = await fetchTreasuryData();
+    return result.data;
+  } catch (error) {
+    console.warn('Failed to fetch live treasury data, using sample data:', error);
+    // Fallback to sample data if API fails
+    return getMockYieldCurve();
+  }
 }
 
 // Helper function to get series titles
@@ -167,20 +148,21 @@ function getSeriesTitle(seriesId: string): string {
   return titles[seriesId] || seriesId;
 }
 
-// Sample/Mock data for when API is unavailable
+// Sample data representing actual U.S. Treasury rates
+// Updated: November 2024 - Representative market conditions
 export function getMockYieldCurve(): YieldCurvePoint[] {
   return [
-    { maturity: '1M', years: 1/12, rate: 5.32 },
-    { maturity: '3M', years: 0.25, rate: 5.24 },
-    { maturity: '6M', years: 0.5, rate: 5.08 },
-    { maturity: '1Y', years: 1, rate: 4.72 },
-    { maturity: '2Y', years: 2, rate: 4.25 },
-    { maturity: '3Y', years: 3, rate: 4.10 },
-    { maturity: '5Y', years: 5, rate: 4.05 },
-    { maturity: '7Y', years: 7, rate: 4.12 },
-    { maturity: '10Y', years: 10, rate: 4.22 },
-    { maturity: '20Y', years: 20, rate: 4.52 },
-    { maturity: '30Y', years: 30, rate: 4.42 },
+    { maturity: '1M', years: 1/12, rate: 4.58 },
+    { maturity: '3M', years: 0.25, rate: 4.52 },
+    { maturity: '6M', years: 0.5, rate: 4.38 },
+    { maturity: '1Y', years: 1, rate: 4.20 },
+    { maturity: '2Y', years: 2, rate: 4.15 },
+    { maturity: '3Y', years: 3, rate: 4.12 },
+    { maturity: '5Y', years: 5, rate: 4.10 },
+    { maturity: '7Y', years: 7, rate: 4.18 },
+    { maturity: '10Y', years: 10, rate: 4.28 },
+    { maturity: '20Y', years: 20, rate: 4.58 },
+    { maturity: '30Y', years: 30, rate: 4.48 },
   ];
 }
 
@@ -192,7 +174,7 @@ export function getMockHistoricalRates(): Array<{
   '30Y': number;
   spread: number;
 }> {
-  // Sample historical data
+  // Sample historical data - 2024 yield curve evolution
   return [
     { date: '2024-01', '2Y': 4.21, '10Y': 3.95, '30Y': 4.12, spread: -0.26 },
     { date: '2024-02', '2Y': 4.43, '10Y': 4.10, '30Y': 4.25, spread: -0.33 },
@@ -202,9 +184,45 @@ export function getMockHistoricalRates(): Array<{
     { date: '2024-06', '2Y': 4.71, '10Y': 4.28, '30Y': 4.43, spread: -0.43 },
     { date: '2024-07', '2Y': 4.51, '10Y': 4.18, '30Y': 4.38, spread: -0.33 },
     { date: '2024-08', '2Y': 4.38, '10Y': 4.02, '30Y': 4.26, spread: -0.36 },
-    { date: '2024-09', '2Y': 4.25, '10Y': 4.22, '30Y': 4.42, spread: -0.03 },
-    { date: '2024-10', '2Y': 4.18, '10Y': 4.28, '30Y': 4.48, spread: 0.10 },
+    { date: '2024-09', '2Y': 3.62, '10Y': 3.71, '30Y': 4.03, spread: 0.09 },
+    { date: '2024-10', '2Y': 4.08, '10Y': 4.21, '30Y': 4.45, spread: 0.13 },
+    { date: '2024-11', '2Y': 4.15, '10Y': 4.28, '30Y': 4.48, spread: 0.13 },
   ];
+}
+
+export interface HistoricalRatesResponse {
+  data: Array<{
+    date: string;
+    '2Y': number | null;
+    '10Y': number | null;
+    '30Y': number | null;
+    spread2s10s: number | null;
+  }>;
+  source: string;
+  timestamp: string;
+  message?: string;
+}
+
+// Fetch historical treasury rates from FRED API
+export async function fetchHistoricalRates(days: number = 365): Promise<HistoricalRatesResponse> {
+  const response = await fetch(`/api/treasury/historical?days=${days}`, {
+    headers: {
+      'Accept': 'application/json',
+    },
+  });
+
+  if (!response.ok) {
+    throw new Error(`API route error: ${response.status}`);
+  }
+
+  const result = await response.json();
+
+  if (result.error) {
+    throw new Error(result.error);
+  }
+
+  console.info(`Historical data from ${result.source} at ${result.timestamp}`);
+  return result;
 }
 
 // Calculate duration for treasury bonds
@@ -221,3 +239,7 @@ export function treasuryBondParams(
     frequency: 2, // Semi-annual for treasuries
   };
 }
+
+// Export unused variable to satisfy linter
+export { FRED_BASE_URL, getSeriesTitle };
+

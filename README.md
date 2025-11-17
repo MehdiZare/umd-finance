@@ -1,6 +1,14 @@
 # Bond Duration Calculator
 
+[![Live Demo](https://img.shields.io/badge/Live%20Demo-umd--finance.onrender.com-blue)](https://umd-finance.onrender.com/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![GitHub](https://img.shields.io/badge/GitHub-MehdiZare%2Fumd--finance-black)](https://github.com/MehdiZare/umd-finance)
+
 An interactive educational tool for Master of Finance students to understand bond duration, convexity, and interest rate risk.
+
+**Live Demo:** [https://umd-finance.onrender.com/](https://umd-finance.onrender.com/)
+
+**Repository:** [https://github.com/MehdiZare/umd-finance](https://github.com/MehdiZare/umd-finance)
 
 ## Features
 
@@ -29,6 +37,16 @@ An interactive educational tool for Master of Finance students to understand bon
 - Duration calculations for on-the-run treasuries
 - Yield curve shape analysis (inverted vs. normal)
 - Historical treasury rate trends
+- **Clear data status indicators** showing when live data is available vs. sample data
+- Automatic retry functionality with user-friendly error messages
+
+### Historical Yield Curve Animation (NEW)
+- **Interactive timeline** showing yield curve evolution through major economic events
+- Covers key periods: Pre-2008 Crisis, Lehman Collapse, COVID-19, Fed Hiking Cycles
+- **Real-time metrics updates** showing how duration/convexity change with each event
+- Educational insights explaining the significance of each period
+- Playback controls with adjustable animation speed
+- Risk metric analysis for each historical snapshot
 
 ### Bond Comparison Tool
 - Compare up to 5 bonds side-by-side
@@ -43,12 +61,12 @@ An interactive educational tool for Master of Finance students to understand bon
 
 ## Technology Stack
 
-- **React 19** with TypeScript
-- **Vite** for fast development and building
+- **Next.js 15** with React 19 and TypeScript
+- **App Router** with server-side API routes (solves CORS issues)
 - **Tailwind CSS** for styling
 - **shadcn/ui** components (Radix UI primitives)
 - **Recharts** for data visualization
-- **FRED API** for real treasury data
+- **FRED API** for real treasury data (server-side fetching)
 
 ## Getting Started
 
@@ -59,6 +77,10 @@ An interactive educational tool for Master of Finance students to understand bon
 ### Installation
 
 ```bash
+# Clone the repository
+git clone https://github.com/MehdiZare/umd-finance.git
+cd umd-finance
+
 # Install dependencies
 npm install
 
@@ -79,13 +101,14 @@ This project includes a `render.yaml` file for easy deployment on [Render](https
 ### Steps:
 1. Push code to GitHub
 2. Connect your Render account to GitHub
-3. Create a new Static Site on Render
+3. Create a new Web Service on Render
 4. Point to your repository
-5. Render will automatically detect the build settings from `render.yaml`
+5. Render will automatically detect the build settings
 
-Alternatively, manual configuration:
+Configuration:
 - **Build Command:** `npm install && npm run build`
-- **Publish Directory:** `dist`
+- **Start Command:** `npm run start`
+- **Environment:** Node
 
 ## Key Concepts Covered
 
@@ -101,9 +124,26 @@ Alternatively, manual configuration:
 ## API Integration
 
 The application fetches real treasury data from the **FRED API** (Federal Reserve Economic Data):
-- No API key required for basic access
-- Automatic fallback to sample data if API is unavailable
-- CORS proxy used for browser requests
+
+### Getting a FRED API Key (Optional, but recommended for live data)
+1. Visit [https://fred.stlouisfed.org/docs/api/api_key.html](https://fred.stlouisfed.org/docs/api/api_key.html)
+2. Request a free API key (takes 1-2 minutes)
+3. Set the environment variable `FRED_API_KEY` in Render dashboard
+4. The app will automatically fetch live treasury data
+
+### Without API Key
+- Uses curated sample data (November 2024 representative rates)
+- All educational features work perfectly
+- Clear indicators show "Sample Data" vs "Live Data"
+
+### Data Features
+- **Live Treasury Yield Curve** - All maturities from 1M to 30Y
+- **Fed Funds Rate** - Current Federal Reserve policy rate
+- **TIPS Yields** - Inflation-protected securities
+- **Breakeven Inflation** - Market inflation expectations
+- **Corporate Spreads** - Investment Grade and High Yield
+- **Direct source links** - Click any indicator to view FRED source page
+- Server-side fetching eliminates CORS issues
 
 ## Educational Use
 
@@ -125,12 +165,37 @@ This tool is for **educational purposes only**. It should not be used for actual
 
 ## License
 
-MIT License - Free for educational and commercial use.
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
 ## Contributing
 
-Contributions are welcome! Please feel free to submit issues or pull requests for:
+Contributions are welcome! Please read our [Contributing Guidelines](CONTRIBUTING.md) and [Code of Conduct](CODE_OF_CONDUCT.md) before submitting pull requests.
+
+Key areas for contribution:
 - Additional duration measures (e.g., key rate duration)
 - More interactive visualizations
 - Enhanced educational content
 - Bug fixes and improvements
+- Internationalization support
+
+## Security
+
+For security concerns, please see our [Security Policy](SECURITY.md).
+
+## Acknowledgments
+
+- **FRED API** - Federal Reserve Economic Data from the St. Louis Fed
+- **University of Maryland** - Master of Finance Program
+- **shadcn/ui** - Beautiful UI components
+- **Recharts** - Composable charting library
+
+## Support
+
+If you have questions or need help:
+1. Check the [Issues](https://github.com/MehdiZare/umd-finance/issues) page
+2. Open a new issue with detailed information
+3. Review the educational content within the app
+
+---
+
+Built with React, TypeScript, and Tailwind CSS for finance education.
